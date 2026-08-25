@@ -1,0 +1,29 @@
+body {
+  background: #0d1117;
+  color: white;
+  font-family: Arial;
+}
+
+.login, .dashboard {
+  text-align: center;
+  margin-top: 50px;
+}
+
+input {
+  display: block;
+  margin: 10px auto;
+  padding: 10px;
+}
+
+button {
+  background: gold;
+  padding: 10px;
+  border: none;
+  margin: 5px;
+  cursor: pointer;
+}
+
+.market-list button {
+  background: #222;
+  color: white;
+}

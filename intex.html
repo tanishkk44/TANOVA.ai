@@ -1,0 +1,1381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TANOVA.ai — Trading Terminal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --void:#f3f5f9;
+  --panel:#ffffff;
+  --panel-2:#eef1f6;
+  --line:#d7dce6;
+  --text:#141a24;
+  --muted:#4d5566;
+  --muted-2:#78829a;
+  --long:#0a8f68;
+  --long-dim:#e3f8ef;
+  --short:#d6304c;
+  --short-dim:#fbe6ea;
+  --gold:#a5730a;
+  --gold-dim:#faf0dc;
+  --font-display:'Space Grotesk', sans-serif;
+  --font-body:'Inter', sans-serif;
+  --font-mono:'JetBrains Mono', monospace;
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--void);
+  color:var(--text);
+  font-family:var(--font-body);
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+  position:relative;
+}
+body::after{
+  content:'';
+  position:fixed; inset:-15%;
+  z-index:-2;
+  pointer-events:none;
+  background-image:
+    linear-gradient(rgba(20,26,36,.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(20,26,36,.05) 1px, transparent 1px);
+  background-size:46px 46px;
+  animation:grid-pan 40s linear infinite;
+}
+body::before{
+  content:'';
+  position:fixed;
+  inset:-20%;
+  z-index:-1;
+  pointer-events:none;
+  background:
+    radial-gradient(32% 26% at 14% 20%, rgba(10,143,104,.34), transparent 68%),
+    radial-gradient(28% 24% at 84% 10%, rgba(165,115,10,.30), transparent 68%),
+    radial-gradient(34% 28% at 90% 62%, rgba(214,48,76,.20), transparent 68%),
+    radial-gradient(36% 30% at 46% 96%, rgba(10,143,104,.26), transparent 68%),
+    radial-gradient(24% 22% at 8% 78%, rgba(20,120,190,.18), transparent 68%);
+  background-repeat:no-repeat;
+  filter:blur(10px);
+  animation:bg-drift 22s ease-in-out infinite alternate;
+  will-change:transform;
+}
+@keyframes bg-drift{
+  0%{ transform:translate(0,0) scale(1) rotate(0deg); }
+  50%{ transform:translate(-4%,4%) scale(1.14) rotate(4deg); }
+  100%{ transform:translate(5%,-3%) scale(1.05) rotate(-3deg); }
+}
+@keyframes grid-pan{
+  0%{ background-position:0 0, 0 0; }
+  100%{ background-position:46px 46px, 46px 46px; }
+}
+@media(prefers-reduced-motion: reduce){
+  body::before, body::after{ animation:none; }
+}
+::selection{background:var(--long); color:#04140f;}
+a{color:inherit;}
+button{font-family:inherit; cursor:pointer;}
+::-webkit-scrollbar{width:8px; height:8px;}
+::-webkit-scrollbar-track{background:var(--void);}
+::-webkit-scrollbar-thumb{background:var(--line); border-radius:4px;}
+
+/* ---------- utility ---------- */
+.hidden{display:none !important;}
+.mono{font-family:var(--font-mono);}
+.up{color:var(--long);}
+.down{color:var(--short);}
+
+/* ================= LANDING ================= */
+#landing{
+  min-height:100vh;
+  position:relative;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+}
+.landing-nav{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:22px 48px;
+  position:relative; z-index:5;
+}
+.brand{display:flex; align-items:center; gap:11px; font-family:var(--font-display); font-weight:700; font-size:20px; letter-spacing:0.2px;}
+.brand .ai{color:var(--long);}
+.brand-mark{
+  width:34px; height:34px; border-radius:9px;
+  background:linear-gradient(145deg, #0c9c72, #087b5b 55%, #a5730a);
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:0 4px 14px -4px rgba(10,143,104,.55);
+  flex-shrink:0;
+}
+.brand-mark svg{width:19px; height:19px; display:block;}
+.landing-nav-links{display:flex; gap:34px; font-size:14px; color:var(--muted);}
+.landing-nav-links span{cursor:pointer; transition:color .15s;}
+.landing-nav-links span:hover{color:var(--text);}
+.nav-cta{display:flex; gap:12px;}
+.btn{
+  border:1px solid var(--line);
+  background:transparent;
+  color:var(--text);
+  padding:9px 18px;
+  border-radius:8px;
+  font-size:13.5px;
+  font-weight:600;
+  transition:all .15s;
+}
+.btn:hover{border-color:var(--muted-2);}
+.btn-solid{
+  background:var(--long);
+  color:#04140f;
+  border:1px solid var(--long);
+}
+.btn-solid:hover{background:#12e8b3; box-shadow:0 0 24px rgba(0,217,163,.25);}
+
+.hero{
+  flex:1;
+  display:grid;
+  grid-template-columns:1.1fr 0.9fr;
+  gap:40px;
+  align-items:center;
+  padding:40px 48px 60px;
+  position:relative; z-index:2;
+  max-width:1360px;
+  margin:0 auto;
+  width:100%;
+}
+.hero-eyebrow{
+  font-family:var(--font-mono); font-size:12px; letter-spacing:2px; color:var(--long);
+  text-transform:uppercase; margin-bottom:18px; display:flex; align-items:center; gap:10px;
+}
+.hero-eyebrow::before{content:''; width:7px; height:7px; border-radius:50%; background:var(--long); box-shadow:0 0 10px var(--long); animation:pulse 1.8s infinite;}
+@keyframes pulse{0%,100%{opacity:1;} 50%{opacity:.35;}}
+.hero h1{
+  font-family:var(--font-display);
+  font-size:clamp(38px,4.6vw,58px);
+  line-height:1.04;
+  font-weight:700;
+  letter-spacing:-0.5px;
+}
+.hero h1 .accent{color:var(--long);}
+.hero p.lead{
+  margin-top:22px; color:var(--muted); font-size:16.5px; line-height:1.65; max-width:520px;
+}
+.hero-actions{display:flex; gap:14px; margin-top:34px; align-items:center;}
+.hero-actions .btn{padding:13px 26px; font-size:14.5px;}
+.hero-stats{display:flex; gap:36px; margin-top:46px;}
+.hstat b{display:block; font-family:var(--font-mono); font-size:24px; font-weight:700;}
+.hstat span{color:var(--muted); font-size:12.5px;}
+
+.hero-panel{
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:0;
+  overflow:hidden;
+  box-shadow:0 30px 60px -20px rgba(0,0,0,.6);
+}
+.hero-panel-head{
+  display:flex; justify-content:space-between; align-items:center;
+  padding:16px 18px; border-bottom:1px solid var(--line);
+  font-size:13px; color:var(--muted);
+}
+.hero-panel-head .dots{display:flex; gap:6px;}
+.hero-panel-head .dots i{width:9px; height:9px; border-radius:50%; background:var(--line); display:block;}
+#hero-chart{height:340px;}
+.hero-panel-foot{
+  border-top:1px solid var(--line);
+  padding:8px 14px;
+  min-height:64px;
+}
+
+.ticker-strip{
+  border-top:1px solid var(--line);
+  border-bottom:1px solid var(--line);
+  background:var(--panel);
+  padding:2px 0;
+  min-height:46px;
+}
+
+.strip-section{padding:90px 48px; max-width:1360px; margin:0 auto;}
+.strip-head{max-width:620px; margin-bottom:52px;}
+.strip-head .eyebrow{font-family:var(--font-mono); font-size:12px; color:var(--gold); letter-spacing:2px; text-transform:uppercase;}
+.strip-head h2{font-family:var(--font-display); font-size:34px; margin-top:12px; font-weight:700;}
+.strip-head p{color:var(--muted); margin-top:12px; font-size:15px; line-height:1.6;}
+.feature-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--line); border:1px solid var(--line); border-radius:14px; overflow:hidden;}
+.feature-card{background:var(--panel); padding:28px 24px;}
+.feature-card .num{font-family:var(--font-mono); color:var(--muted-2); font-size:12px;}
+.feature-card h3{font-family:var(--font-display); font-size:18px; margin:14px 0 8px;}
+.feature-card p{color:var(--muted); font-size:13.5px; line-height:1.55;}
+
+.landing-foot{border-top:1px solid var(--line); padding:26px 48px; display:flex; justify-content:space-between; color:var(--muted-2); font-size:12.5px;}
+.about-wrap{display:grid; grid-template-columns:1.3fr 1fr; gap:28px; align-items:stretch;}
+.about-card{background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:32px;}
+.about-card p{color:var(--muted); font-size:14.5px; line-height:1.75; margin-top:14px;}
+.about-card p + p{margin-top:12px;}
+.founder-card{background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:32px; display:flex; flex-direction:column;}
+.founder-avatar{
+  width:56px; height:56px; border-radius:14px;
+  background:linear-gradient(145deg, #0c9c72, #087b5b 55%, #a5730a);
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--font-display); font-weight:700; font-size:20px; color:#fff;
+  margin-bottom:16px;
+}
+.founder-card h3{font-family:var(--font-display); font-size:19px;}
+.founder-card .role{color:var(--muted-2); font-size:12.5px; margin-top:2px; text-transform:uppercase; letter-spacing:.6px;}
+.founder-card p{color:var(--muted); font-size:13.5px; line-height:1.65; margin-top:14px;}
+.contact-row{
+  margin-top:auto; padding-top:18px; border-top:1px solid var(--line);
+  display:flex; align-items:center; gap:10px;
+}
+.contact-row a{
+  display:inline-flex; align-items:center; gap:8px;
+  color:var(--long); font-weight:600; font-size:13.5px; font-family:var(--font-mono);
+  text-decoration:none;
+}
+.contact-row a:hover{text-decoration:underline;}
+
+/* ---- auth modal ---- */
+.modal-veil{
+  position:fixed; inset:0; background:rgba(4,6,10,.72); backdrop-filter:blur(3px);
+  display:flex; align-items:center; justify-content:center; z-index:100;
+}
+.modal{
+  width:400px; background:var(--panel); border:1px solid var(--line); border-radius:16px;
+  padding:30px 30px 26px; position:relative;
+}
+.modal-close{position:absolute; top:16px; right:18px; background:none; border:none; color:var(--muted); font-size:20px;}
+.modal h2{font-family:var(--font-display); font-size:22px; margin-bottom:4px;}
+.modal .sub{color:var(--muted); font-size:13px; margin-bottom:20px;}
+.tabbar{display:flex; background:var(--panel-2); border-radius:9px; padding:4px; margin-bottom:20px;}
+.tabbar button{flex:1; padding:9px; border:none; background:transparent; color:var(--muted); border-radius:6px; font-size:13.5px; font-weight:600;}
+.tabbar button.active{background:var(--long); color:#04140f;}
+.field{margin-bottom:14px;}
+.field label{display:block; font-size:12.5px; color:var(--muted); margin-bottom:6px;}
+.field input{
+  width:100%; padding:11px 12px; background:var(--void); border:1px solid var(--line);
+  border-radius:8px; color:var(--text); font-size:14px; outline:none;
+}
+.field input:focus{border-color:var(--long);}
+.modal-submit{width:100%; padding:12px; margin-top:6px; border-radius:8px; font-size:14.5px;}
+.modal-note{font-size:12px; color:var(--muted-2); margin-top:14px; text-align:center;}
+.form-err{color:var(--short); font-size:12.5px; margin-top:-6px; margin-bottom:10px; display:none;}
+
+/* ================= APP SHELL ================= */
+#app{display:none; min-height:100vh; grid-template-columns:220px 1fr;}
+#app.show{display:grid;}
+.sidebar{
+  background:var(--panel); border-right:1px solid var(--line);
+  padding:20px 14px; display:flex; flex-direction:column; position:sticky; top:0; height:100vh;
+}
+.sidebar .brand{padding:0 8px 22px; border-bottom:1px solid var(--line); margin-bottom:16px;}
+.side-link{
+  display:flex; align-items:center; gap:11px; padding:10px 12px; border-radius:9px;
+  color:var(--muted); font-size:13.5px; font-weight:600; margin-bottom:2px; border:none; background:none; width:100%; text-align:left;
+}
+.side-link .ic{width:18px; text-align:center; font-size:14px;}
+.side-link:hover{color:var(--text); background:var(--panel-2);}
+.side-link.active{color:var(--void); background:var(--long);}
+.side-group-label{font-size:10.5px; color:var(--muted-2); letter-spacing:1.2px; text-transform:uppercase; margin:16px 8px 6px;}
+.sidebar-foot{margin-top:auto; padding-top:14px; border-top:1px solid var(--line);}
+.acct-chip{display:flex; align-items:center; gap:10px; padding:8px; border-radius:9px;}
+.acct-avatar{width:32px; height:32px; border-radius:8px; background:linear-gradient(135deg,var(--gold),var(--short)); display:flex; align-items:center; justify-content:center; font-weight:700; font-family:var(--font-mono); font-size:13px; color:#1a0d0d;}
+.acct-name{font-size:13px; font-weight:600;}
+.acct-email{font-size:11px; color:var(--muted-2);}
+.logout-btn{width:100%; margin-top:10px; font-size:12.5px; padding:8px;}
+
+.main{padding:0 34px 60px; overflow-y:auto; height:100vh;}
+.topbar{
+  position:sticky; top:0; background:rgba(243,245,249,.88); backdrop-filter:blur(10px);
+  padding:22px 0 16px; z-index:10; display:flex; justify-content:space-between; align-items:center;
+  border-bottom:1px solid var(--line); margin-bottom:26px;
+}
+.topbar h1{font-family:var(--font-display); font-size:24px; color:var(--text);}
+.topbar .path{color:var(--muted-2); font-size:12.5px; margin-top:3px; font-family:var(--font-mono);}
+.topbar-actions{display:flex; gap:10px; align-items:center;}
+.pill{font-size:11.5px; padding:6px 11px; border-radius:20px; background:var(--long-dim); color:var(--long); font-weight:600; font-family:var(--font-mono);}
+
+.view{display:none;}
+.view.active{display:block;}
+
+/* cards */
+.grid{display:grid; gap:16px;}
+.grid-4{grid-template-columns:repeat(4,1fr);}
+.grid-3{grid-template-columns:repeat(3,1fr);}
+.grid-2{grid-template-columns:2fr 1fr;}
+.card{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:20px;}
+.card-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;}
+.card-head h3{font-family:var(--font-display); font-size:15.5px;}
+.card-head .link{font-size:12px; color:var(--long); font-weight:600;}
+
+.stat-card b{display:block; font-family:var(--font-mono); font-size:26px;}
+.stat-card span.label{color:var(--muted); font-size:12.5px;}
+.stat-card .delta{font-family:var(--font-mono); font-size:12.5px; margin-top:6px; display:inline-block;}
+
+.watch-row{
+  display:grid; grid-template-columns:2fr 1fr 1fr 1fr auto; gap:10px; align-items:center;
+  padding:12px 6px; border-bottom:1px solid var(--line); font-size:13.5px;
+}
+.watch-row:last-child{border-bottom:none;}
+.watch-row .sym{font-weight:700; font-family:var(--font-mono);}
+.watch-row .name{color:var(--muted-2); font-size:11.5px; display:block;}
+.watch-row .price{font-family:var(--font-mono);}
+.mini-spark{height:34px; width:100px;}
+.chip-btn{padding:6px 12px; font-size:11.5px; border-radius:7px; background:var(--panel-2); border:1px solid var(--line); color:var(--text); font-weight:600;}
+.chip-btn:hover{border-color:var(--long);}
+
+.rank-row{
+  display:grid; grid-template-columns:32px 1.6fr 90px 1fr 100px; gap:12px; align-items:center;
+  padding:13px 8px; border-bottom:1px solid var(--line); font-size:13.5px;
+}
+.rank-row:last-child{border-bottom:none;}
+.rank-num{
+  width:26px; height:26px; border-radius:7px; background:var(--panel-2);
+  display:flex; align-items:center; justify-content:center; font-family:var(--font-mono); font-weight:700; font-size:12px; color:var(--muted);
+}
+.rank-row:first-child .rank-num{background:var(--gold-dim); color:var(--gold);}
+.rank-sym{font-weight:700; font-family:var(--font-mono);}
+.rank-name{color:var(--muted-2); font-size:11.5px; display:block;}
+.rank-reason{color:var(--muted); font-size:12px;}
+.rank-conf{font-family:var(--font-mono); font-size:12.5px; text-align:right;}
+
+/* signals */
+.signal-card{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:20px; position:relative;}
+.signal-top{display:flex; justify-content:space-between; align-items:flex-start;}
+.signal-sym{font-family:var(--font-mono); font-weight:700; font-size:16px;}
+.signal-name{color:var(--muted-2); font-size:11.5px;}
+.badge{padding:5px 11px; border-radius:7px; font-size:11.5px; font-weight:700; font-family:var(--font-mono); letter-spacing:.4px;}
+.badge.buy{background:var(--long-dim); color:var(--long);}
+.badge.sell{background:var(--short-dim); color:var(--short);}
+.signal-levels{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:16px 0;}
+.slevel{background:var(--panel-2); border-radius:9px; padding:10px; text-align:center;}
+.slevel small{display:block; color:var(--muted-2); font-size:10px; text-transform:uppercase; letter-spacing:.5px; margin-bottom:4px;}
+.slevel b{font-family:var(--font-mono); font-size:14.5px;}
+.conf-bar{height:6px; border-radius:4px; background:var(--panel-2); overflow:hidden; margin-top:14px;}
+.conf-fill{height:100%; background:linear-gradient(90deg,var(--long),var(--gold));}
+.conf-label{display:flex; justify-content:space-between; font-size:11px; color:var(--muted); margin-top:6px;}
+.signal-note{font-size:12px; color:var(--muted); margin-top:12px; line-height:1.5; border-top:1px solid var(--line); padding-top:12px;}
+.ta-embed{margin-top:14px; border:1px solid var(--line); border-radius:9px; overflow:hidden; background:var(--panel-2); min-height:220px;}
+.regen-btn{width:100%; margin-top:14px; padding:9px; font-size:12.5px;}
+
+.disclaimer{
+  background:var(--panel-2); border:1px solid var(--line); border-left:3px solid var(--gold);
+  padding:14px 16px; border-radius:8px; font-size:12.5px; color:var(--muted); line-height:1.6; margin-bottom:22px;
+}
+.disclaimer b{color:var(--gold);}
+
+table{width:100%; border-collapse:collapse; font-size:13px;}
+th{text-align:left; color:var(--muted-2); font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:.5px; padding:10px 8px; border-bottom:1px solid var(--line);}
+td{padding:12px 8px; border-bottom:1px solid var(--line); font-family:var(--font-mono);}
+tr:last-child td{border-bottom:none;}
+.tag{padding:4px 9px; border-radius:6px; font-size:11px; font-weight:700;}
+.tag.closed-win{background:var(--long-dim); color:var(--long);}
+.tag.closed-loss{background:var(--short-dim); color:var(--short);}
+.tag.open{background:var(--gold-dim); color:var(--gold);}
+
+.symbol-select{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px;}
+.sym-btn{padding:8px 16px; border-radius:8px; border:1px solid var(--line); background:var(--panel); font-size:12.5px; font-weight:700; font-family:var(--font-mono); color:var(--muted);}
+.sym-btn.active{background:var(--long); color:#04140f; border-color:var(--long);}
+
+.company-card{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:22px;}
+.company-card .icon-tag{
+  width:40px; height:40px; border-radius:9px; display:flex; align-items:center; justify-content:center;
+  font-family:var(--font-mono); font-weight:700; font-size:13px; margin-bottom:14px;
+}
+.company-card h3{font-family:var(--font-display); font-size:17px; margin-bottom:6px;}
+.company-card p{color:var(--muted); font-size:13px; line-height:1.6;}
+.company-meta{display:flex; gap:16px; margin-top:14px; padding-top:14px; border-top:1px solid var(--line);}
+.company-meta div span{display:block; color:var(--muted-2); font-size:10.5px; text-transform:uppercase;}
+.company-meta div b{font-family:var(--font-mono); font-size:13.5px;}
+
+/* ---- AI Desk Assistant ---- */
+.chat-fab{
+  position:fixed; right:26px; bottom:26px; z-index:200;
+  width:56px; height:56px; border-radius:16px; border:none;
+  background:linear-gradient(145deg, #0c9c72, #087b5b 55%, #a5730a);
+  box-shadow:0 10px 26px -8px rgba(10,143,104,.55);
+  display:flex; align-items:center; justify-content:center;
+  transition:transform .15s;
+}
+.chat-fab:hover{transform:translateY(-2px) scale(1.04);}
+.chat-fab svg{width:24px; height:24px;}
+.chat-panel{
+  position:fixed; right:26px; bottom:96px; z-index:200;
+  width:370px; max-width:calc(100vw - 40px); height:520px; max-height:calc(100vh - 140px);
+  background:var(--panel); border:1px solid var(--line); border-radius:16px;
+  box-shadow:0 30px 60px -18px rgba(20,26,36,.28);
+  display:none; flex-direction:column; overflow:hidden;
+}
+.chat-panel.open{display:flex;}
+.chat-head{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 14px; border-bottom:1px solid var(--line);
+}
+.chat-head-title{display:flex; align-items:center; gap:10px;}
+.chat-avatar{
+  width:34px; height:34px; border-radius:9px;
+  background:linear-gradient(145deg, #0c9c72, #087b5b 55%, #a5730a);
+  color:#fff; display:flex; align-items:center; justify-content:center;
+  font-family:var(--font-display); font-weight:700; font-size:14px;
+}
+.chat-title{font-family:var(--font-display); font-weight:700; font-size:14px;}
+.chat-sub{font-size:11px; color:var(--muted-2);}
+.chat-icon-btn{
+  width:28px; height:28px; border-radius:7px; border:1px solid var(--line); background:var(--panel-2);
+  color:var(--muted); font-size:13px; display:flex; align-items:center; justify-content:center;
+}
+.chat-icon-btn:hover{border-color:var(--long); color:var(--long);}
+.chat-settings{
+  padding:14px; border-bottom:1px solid var(--line); background:var(--panel-2);
+}
+.chat-settings p{font-size:11.5px; color:var(--muted); line-height:1.55; margin-bottom:8px;}
+.chat-settings input{
+  width:100%; padding:9px 10px; background:var(--void); border:1px solid var(--line);
+  border-radius:7px; color:var(--text); font-size:12.5px; font-family:var(--font-mono); outline:none;
+}
+.chat-messages{flex:1; overflow-y:auto; padding:16px 14px; display:flex; flex-direction:column; gap:12px;}
+.chat-msg{max-width:86%; font-size:13px; line-height:1.55; padding:10px 12px; border-radius:12px; white-space:pre-wrap;}
+.chat-msg.bot{background:var(--panel-2); border:1px solid var(--line); align-self:flex-start; border-bottom-left-radius:4px;}
+.chat-msg.user{background:var(--long); color:#fff; align-self:flex-end; border-bottom-right-radius:4px; font-weight:500;}
+.chat-msg.typing{color:var(--muted-2); font-style:italic;}
+.chat-quick{display:flex; gap:6px; flex-wrap:wrap; padding:0 14px 10px;}
+.chat-quick button{
+  padding:6px 10px; font-size:11px; border-radius:20px; border:1px solid var(--line);
+  background:var(--panel-2); color:var(--muted); font-weight:600;
+}
+.chat-quick button:hover{border-color:var(--long); color:var(--long);}
+.chat-input-row{display:flex; gap:8px; padding:12px 14px; border-top:1px solid var(--line);}
+.chat-input-row input{
+  flex:1; padding:10px 12px; background:var(--void); border:1px solid var(--line);
+  border-radius:9px; color:var(--text); font-size:13px; outline:none;
+}
+.chat-input-row input:focus{border-color:var(--long);}
+.chat-send-btn{
+  width:38px; height:38px; border-radius:9px; border:none; background:var(--long); color:#fff;
+  font-size:15px; display:flex; align-items:center; justify-content:center; flex-shrink:0;
+}
+.chat-send-btn:hover{background:#0aa87c;}
+@media(max-width:480px){
+  .chat-panel{right:12px; left:12px; width:auto; bottom:88px;}
+  .chat-fab{right:16px; bottom:16px;}
+}
+
+@media(max-width:1000px){
+  .hero{grid-template-columns:1fr;}
+  .feature-grid{grid-template-columns:repeat(2,1fr);}
+  .about-wrap{grid-template-columns:1fr;}
+  #app{grid-template-columns:1fr;}
+  .sidebar{display:none;}
+  .grid-4{grid-template-columns:repeat(2,1fr);}
+  .grid-2{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<!-- ================= LANDING PAGE ================= -->
+<div id="landing">
+  <nav class="landing-nav">
+    <div class="brand"><div class="brand-mark"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 16.5L9 10.5L13 14.5L21 5.5" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 5.5H21V11.5" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>TANOVA<span class="ai">.ai</span></div>
+    <div class="landing-nav-links">
+      <span onclick="scrollToId('features')">Platform</span>
+      <span onclick="scrollToId('markets-preview')">Markets</span>
+      <span onclick="scrollToId('features')">AI Signals</span>
+      <span onclick="scrollToId('about')">About</span>
+    </div>
+    <div class="nav-cta">
+      <button class="btn" onclick="openAuth('login')">Log in</button>
+      <button class="btn btn-solid" onclick="openAuth('signup')">Create account</button>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <div>
+      <div class="hero-eyebrow live-status">Fetching live prices…</div>
+      <h1>Trade with a plan,<br>not a <span class="accent">guess</span>.</h1>
+      <p class="lead">TANOVA.ai watches the pairs and assets that matter, scores the setup, and lays out the entry, stop, and target before you click buy or sell — so every trade starts with a reason.</p>
+      <div class="hero-actions">
+        <button class="btn btn-solid" onclick="openAuth('signup')">Start trading free</button>
+        <button class="btn" onclick="scrollToId('markets-preview')">See live markets ↓</button>
+      </div>
+      <div class="hero-stats">
+        <div class="hstat"><b>8</b><span>Markets covered</span></div>
+        <div class="hstat"><b class="mono">24/5</b><span>Live pricing</span></div>
+        <div class="hstat"><b class="up">2</b><span>Signals per symbol*</span></div>
+      </div>
+    </div>
+    <div class="hero-panel">
+      <div class="hero-panel-head">
+        <span>XAUUSD · Gold Spot</span>
+        <div class="dots"><i></i><i></i><i></i></div>
+      </div>
+      <div id="hero-chart"></div>
+      <div class="hero-panel-foot" id="hero-quote-widget"></div>
+    </div>
+  </section>
+
+  <div class="ticker-strip" id="tv-ticker-tape"></div>
+
+  <section class="strip-section" id="features">
+    <div class="strip-head">
+      <div class="eyebrow">How the desk works</div>
+      <h2>Everything you need between opening a chart and closing a trade.</h2>
+      <p>One workspace for market scanning, chart analysis, setup generation and trade tracking — built the way a full-time trader actually works through a session.</p>
+    </div>
+    <div class="feature-grid">
+      <div class="feature-card"><div class="num">01</div><h3>Live charting</h3><p>Real, streaming price charts for BTC, gold, and major FX pairs, with the same candles and drawing tools you'd use on a trading desk.</p></div>
+      <div class="feature-card"><div class="num">02</div><h3>Setup generator</h3><p>A model reads trend, momentum and volatility on each symbol and proposes a direction, entry zone, stop-loss and target.</p></div>
+      <div class="feature-card"><div class="num">03</div><h3>Confidence scoring</h3><p>Every setup ships with a confidence read, so you can size positions against how strong the signal actually is.</p></div>
+      <div class="feature-card"><div class="num">04</div><h3>Trade journal</h3><p>Every position you log is tracked from entry to exit, with running win rate and average return by symbol.</p></div>
+    </div>
+  </section>
+
+  <section class="strip-section" id="markets-preview" style="padding-top:0;">
+    <div class="strip-head">
+      <div class="eyebrow">Covered today</div>
+      <h2>Eight markets, one screen.</h2>
+    </div>
+    <div class="grid grid-4" id="landing-market-grid"></div>
+  </section>
+
+  <section class="strip-section" id="about">
+    <div class="strip-head">
+      <div class="eyebrow">About</div>
+      <h2>Why TANOVA.ai exists.</h2>
+    </div>
+    <div class="about-wrap">
+      <div class="about-card">
+        <p>TANOVA.ai is a single desk for watching the markets that move fastest — Bitcoin, gold, and the majors in FX — and for turning that noise into a clear, structured plan before you place a trade.</p>
+        <p>Instead of jumping between a charting app, a news feed and a spreadsheet of open positions, everything sits in one place: live pricing, a model-generated setup for each symbol, and a running journal of every trade you log.</p>
+        <p>It's an independent project, built and maintained by one person, and it keeps growing with more markets, sharper setups and a better trading journal over time.</p>
+      </div>
+      <div class="founder-card">
+        <div class="founder-avatar">T</div>
+        <h3>Tanishk</h3>
+        <div class="role">Founder &amp; builder, TANOVA.ai</div>
+        <p>I built TANOVA.ai to bring a proper trading desk — live charts, a setup generator and a trade journal — into one clean screen. Feedback, bug reports and feature requests are always welcome.</p>
+        <div class="contact-row">
+          <a href="mailto:tanishk188@gmail.com">✉ tanishk188@gmail.com</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="landing-foot" id="footer">
+    <span>© 2026 TANOVA.ai. Trading involves risk; see risk disclosure.</span>
+    <span>Charts and pricing data are provided by a licensed third-party market data partner.</span>
+  </footer>
+</div>
+
+<!-- ================= AUTH MODAL ================= -->
+<div class="modal-veil hidden" id="authVeil">
+  <div class="modal">
+    <button class="modal-close" onclick="closeAuth()">✕</button>
+    <div class="tabbar">
+      <button id="tab-login" onclick="switchAuthTab('login')" class="active">Log in</button>
+      <button id="tab-signup" onclick="switchAuthTab('signup')">Sign up</button>
+    </div>
+
+    <div id="pane-login">
+      <h2>Welcome back</h2>
+      <div class="sub">Log in to reach your dashboard.</div>
+      <div class="field"><label>Email</label><input id="login-email" type="email" placeholder="you@email.com"></div>
+      <div class="field"><label>Password</label><input id="login-pass" type="password" placeholder="••••••••"></div>
+      <div class="form-err" id="login-err">Enter an email and password to continue.</div>
+      <button class="btn btn-solid modal-submit" onclick="doLogin()">Log in</button>
+      <div class="modal-note">No account? <a href="#" onclick="switchAuthTab('signup');return false;" style="color:var(--long);font-weight:600;">Create one</a></div>
+    </div>
+
+    <div id="pane-signup" class="hidden">
+      <h2>Create your account</h2>
+      <div class="sub">Set up your desk in under a minute.</div>
+      <div class="field"><label>Full name</label><input id="su-name" placeholder="Alex Morgan"></div>
+      <div class="field"><label>Email</label><input id="su-email" type="email" placeholder="you@email.com"></div>
+      <div class="field"><label>Password</label><input id="su-pass" type="password" placeholder="Minimum 8 characters"></div>
+      <div class="form-err" id="su-err">Please fill in every field (password 8+ characters).</div>
+      <button class="btn btn-solid modal-submit" onclick="doSignup()">Create account</button>
+      <div class="modal-note">Already registered? <a href="#" onclick="switchAuthTab('login');return false;" style="color:var(--long);font-weight:600;">Log in</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= APP ================= -->
+<div id="app">
+  <aside class="sidebar">
+    <div class="brand"><div class="brand-mark"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 16.5L9 10.5L13 14.5L21 5.5" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 5.5H21V11.5" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>TANOVA<span class="ai">.ai</span></div>
+    <div class="side-group-label">Workspace</div>
+    <button class="side-link active" data-view="dashboard" onclick="showView('dashboard')"><span class="ic">◆</span>Dashboard</button>
+    <button class="side-link" data-view="markets" onclick="showView('markets')"><span class="ic">▤</span>Markets</button>
+    <button class="side-link" data-view="charts" onclick="showView('charts')"><span class="ic">📈</span>Live charts</button>
+    <button class="side-link" data-view="signals" onclick="showView('signals')"><span class="ic">⚡</span>AI setups</button>
+    <div class="side-group-label">Account</div>
+    <button class="side-link" data-view="history" onclick="showView('history')"><span class="ic">☰</span>Trade history</button>
+    <button class="side-link" data-view="companies" onclick="showView('companies')"><span class="ic">◈</span>Companies &amp; assets</button>
+    <button class="side-link" data-view="settings" onclick="showView('settings')"><span class="ic">⚙</span>Settings</button>
+    <div class="sidebar-foot">
+      <div class="acct-chip">
+        <div class="acct-avatar" id="acct-avatar">A</div>
+        <div><div class="acct-name" id="acct-name">Trader</div><div class="acct-email" id="acct-email">you@email.com</div></div>
+      </div>
+      <button class="btn logout-btn" onclick="doLogout()">Log out</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <!-- DASHBOARD -->
+    <section class="view active" id="view-dashboard">
+      <div class="topbar">
+        <div><h1>Dashboard</h1><div class="path">Overview of your desk</div></div>
+        <div class="topbar-actions"><span class="pill live-status">Fetching live prices…</span></div>
+      </div>
+
+      <div class="grid grid-4" style="margin-bottom:18px;">
+        <div class="card stat-card"><span class="label">Open setups</span><b id="stat-open-setups">8</b><span class="delta up">Live now</span></div>
+        <div class="card stat-card"><span class="label">Logged trades</span><b>14</b><span class="delta up">↑ 9 wins</span></div>
+        <div class="card stat-card"><span class="label">Win rate</span><b>64%</b><span class="delta up">▲ 4% this week</span></div>
+        <div class="card stat-card"><span class="label">Avg. R:R</span><b>1 : 2.1</b><span class="delta" style="color:var(--gold);">Target ≥ 1:2</span></div>
+      </div>
+
+      <div class="grid grid-2" style="align-items:start;">
+        <div class="card">
+          <div class="card-head"><h3>Market watch</h3><span class="link" onclick="showView('markets')">View all →</span></div>
+          <div id="dash-watchlist" style="height:420px;"></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h3 id="top-setup-title">Best opportunity right now</h3><span class="link" onclick="showView('signals')">All setups →</span></div>
+          <div id="dash-top-signal"></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:16px;">
+        <div class="card-head"><h3>Where to focus right now</h3><span style="color:var(--muted-2);font-size:11.5px;" class="mono">Ranked by signal strength</span></div>
+        <div id="opportunity-ranking"></div>
+      </div>
+    </section>
+
+    <!-- MARKETS -->
+    <section class="view" id="view-markets">
+      <div class="topbar"><div><h1>Markets</h1><div class="path">All covered instruments</div></div></div>
+      <div class="card">
+        <div class="card-head"><h3>Watchlist</h3><span style="color:var(--muted-2); font-size:11.5px;" class="mono">Auto-refreshing</span></div>
+        <div id="full-watchlist" style="height:520px;"></div>
+      </div>
+    </section>
+
+    <!-- CHARTS -->
+    <section class="view" id="view-charts">
+      <div class="topbar"><div><h1>Live charts</h1><div class="path">Full analysis view</div></div></div>
+      <div class="symbol-select" id="chart-symbol-select"></div>
+      <div class="card" style="padding:0; overflow:hidden;">
+        <div id="main-chart" style="height:560px;"></div>
+      </div>
+    </section>
+
+    <!-- SIGNALS -->
+    <section class="view" id="view-signals">
+      <div class="topbar"><div><h1>AI setups</h1><div class="path">Model-generated entries &amp; exits</div></div></div>
+      <div class="disclaimer"><b>Educational use only.</b> The momentum read is computed from tracked live price data, and the technical panel in each card is a real, independently-computed indicator consensus. Neither is a guarantee — no signal is right 100% of the time. Always confirm on your own chart and risk only what you can afford to lose.</div>
+      <div class="card" style="margin-bottom:18px;">
+        <div class="card-head"><h3>Ranked by signal strength</h3><span style="color:var(--muted-2);font-size:11.5px;" class="mono">Highest confidence first</span></div>
+        <div id="opportunity-ranking-full"></div>
+      </div>
+      <div class="grid grid-3" id="signals-grid"></div>
+    </section>
+
+    <!-- HISTORY -->
+    <section class="view" id="view-history">
+      <div class="topbar"><div><h1>Trade history</h1><div class="path">Everything you've logged</div></div></div>
+      <div class="card">
+        <div class="card-head"><h3>Recent trades</h3><button class="chip-btn" onclick="addDemoTrade()">+ Log a trade</button></div>
+        <table>
+          <thead><tr><th>Symbol</th><th>Side</th><th>Entry</th><th>Exit</th><th>P/L</th><th>Opened</th><th>Status</th></tr></thead>
+          <tbody id="history-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- COMPANIES -->
+    <section class="view" id="view-companies">
+      <div class="topbar"><div><h1>Companies &amp; assets</h1><div class="path">What you're actually trading</div></div></div>
+      <div class="grid grid-3" id="companies-grid"></div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section class="view" id="view-settings">
+      <div class="topbar"><div><h1>Settings</h1><div class="path">Your account</div></div></div>
+      <div class="card" style="max-width:480px;">
+        <div class="card-head"><h3>Profile</h3></div>
+        <div class="field"><label>Full name</label><input id="set-name" value="Trader"></div>
+        <div class="field"><label>Email</label><input id="set-email" value="you@email.com"></div>
+        <div class="field"><label>Base currency</label><input value="USD"></div>
+        <button class="btn btn-solid" onclick="saveSettings()">Save changes</button>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- ================= AI DESK ASSISTANT ================= -->
+<button class="chat-fab" id="chatFab" onclick="toggleChat()" aria-label="Open trading assistant">
+  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 5h16v11H8l-4 4V5z" stroke="white" stroke-width="1.8" stroke-linejoin="round"/><circle cx="9" cy="10.5" r="1.1" fill="white"/><circle cx="12.5" cy="10.5" r="1.1" fill="white"/><circle cx="16" cy="10.5" r="1.1" fill="white"/></svg>
+</button>
+
+<div class="chat-panel" id="chatPanel">
+  <div class="chat-head">
+    <div class="chat-head-title">
+      <div class="chat-avatar">T</div>
+      <div><div class="chat-title">Desk Assistant</div><div class="chat-sub" id="chatModeLabel">Built-in trading assistant</div></div>
+    </div>
+    <div style="display:flex; gap:4px;">
+      <button class="chat-icon-btn" onclick="toggleChatSettings()" title="Settings">⚙</button>
+      <button class="chat-icon-btn" onclick="toggleChat()" title="Close">✕</button>
+    </div>
+  </div>
+
+  <div class="chat-settings hidden" id="chatSettings">
+    <p>By default this assistant answers from live desk data and a built-in trading knowledge base — no external calls, works offline.</p>
+    <p>Optionally, paste your own Anthropic API key below to route questions to a live Claude model instead. The key is kept only in memory for this browser tab — it's never saved or sent anywhere except directly to Anthropic's API.</p>
+    <input type="password" id="apiKeyInput" placeholder="sk-ant-...">
+    <div style="display:flex; gap:8px; margin-top:8px;">
+      <button class="btn btn-solid" style="flex:1; padding:9px; font-size:12.5px;" onclick="saveApiKey()">Connect key</button>
+      <button class="btn" style="padding:9px 14px; font-size:12.5px;" onclick="clearApiKey()">Remove</button>
+    </div>
+  </div>
+
+  <div class="chat-messages" id="chatMessages"></div>
+
+  <div class="chat-quick" id="chatQuick">
+    <button onclick="sendQuickChat('What should I trade right now?')">Best setup now</button>
+    <button onclick="sendQuickChat('What is a stop loss?')">Stop loss?</button>
+    <button onclick="sendQuickChat('What is the signal on gold?')">Gold signal</button>
+    <button onclick="sendQuickChat('How does risk to reward work?')">Risk:reward</button>
+  </div>
+
+  <div class="chat-input-row">
+    <input type="text" id="chatInput" placeholder="Ask about a market, a signal, or trading in general…" onkeydown="if(event.key==='Enter') sendChat();">
+    <button class="chat-send-btn" onclick="sendChat()">➤</button>
+  </div>
+</div>
+
+<script src="https://s3.tradingview.com/tv.js"></script>
+<script>
+/* ============ DATA ============ */
+const INSTRUMENTS = [
+  {sym:'BTCUSD', tv:'BINANCE:BTCUSDT', name:'Bitcoin', price:64250.30, cls:'Crypto', chg:null, live:false, hist:[]},
+  {sym:'XAUUSD', tv:'OANDA:XAUUSD', name:'Gold Spot', price:2378.40, cls:'Metal', chg:null, live:false, hist:[]},
+  {sym:'EURUSD', tv:'OANDA:EURUSD', name:'Euro / US Dollar', price:1.0842, cls:'FX', chg:null, live:false, hist:[]},
+  {sym:'AUDUSD', tv:'OANDA:AUDUSD', name:'Aussie / US Dollar', price:0.6621, cls:'FX', chg:null, live:false, hist:[]},
+  {sym:'NZDUSD', tv:'OANDA:NZDUSD', name:'Kiwi / US Dollar', price:0.6084, cls:'FX', chg:null, live:false, hist:[]},
+  {sym:'GBPUSD', tv:'OANDA:GBPUSD', name:'Pound / US Dollar', price:1.2733, cls:'FX', chg:null, live:false, hist:[]},
+  {sym:'USDCAD', tv:'OANDA:USDCAD', name:'US Dollar / Loonie', price:1.3702, cls:'FX', chg:null, live:false, hist:[]},
+  {sym:'USDCHF', tv:'OANDA:USDCHF', name:'US Dollar / Franc', price:0.8912, cls:'FX', chg:null, live:false, hist:[]}
+];
+let lastLiveRefresh = null;
+
+/* ---- Live market data: pulls real prices from public, no-key market data endpoints ----
+   BTC + 24h change  -> CoinGecko
+   Gold spot          -> Gold-API
+   FX pairs + change  -> Frankfurter (ECB reference rates, today vs previous business day) */
+/* ---- Live reference prices for AI-setup math (BTC/Gold real-time, FX daily) ----
+   The watchlist, ticker and hero quote you actually SEE are native TradingView
+   widgets further down (same live feed as the charts) — this fetch only feeds
+   the entry/stop/target math on the AI Setups page and the landing preview cards. */
+async function fetchBTC(){
+  try{
+    const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true');
+    const d = await r.json();
+    return { price: d.bitcoin.usd, chg: d.bitcoin.usd_24h_change };
+  }catch(e){ return null; }
+}
+async function fetchGold(){
+  try{
+    const r = await fetch('https://api.gold-api.com/price/XAU');
+    const d = await r.json();
+    return { price: d.price, chg: null };
+  }catch(e){ return null; }
+}
+async function fetchFX(){
+  try{
+    const r = await fetch('https://open.er-api.com/v6/latest/USD');
+    const d = await r.json();
+    if(d.result !== 'success') return null;
+    const R = d.rates;
+    return {
+      EURUSD: { price: 1/R.EUR, chg: null },
+      GBPUSD: { price: 1/R.GBP, chg: null },
+      AUDUSD: { price: 1/R.AUD, chg: null },
+      NZDUSD: { price: 1/R.NZD, chg: null },
+      USDCAD: { price: R.CAD, chg: null },
+      USDCHF: { price: R.CHF, chg: null },
+    };
+  }catch(e){ return null; }
+}
+function findIns(sym){ return INSTRUMENTS.find(i=>i.sym===sym); }
+async function refreshLiveData(){
+  const [btc, gold, fx] = await Promise.all([fetchBTC(), fetchGold(), fetchFX()]);
+  if(btc){ Object.assign(findIns('BTCUSD'), {price:btc.price, chg:btc.chg, live:true}); }
+  if(gold){ Object.assign(findIns('XAUUSD'), {price:gold.price, chg:gold.chg, live:true}); }
+  if(fx){
+    Object.entries(fx).forEach(([sym, v])=> Object.assign(findIns(sym), {price:v.price, chg:v.chg, live:true}));
+  }
+  INSTRUMENTS.forEach(ins=>{
+    if(ins.live){
+      ins.hist.push(ins.price);
+      if(ins.hist.length > 16) ins.hist.shift();
+    }
+  });
+  lastLiveRefresh = new Date();
+  updateLiveStatusUI();
+  renderLandingGrid();
+  refreshSignalNumbers();
+}
+function updateLiveStatusUI(){
+  const anyLive = INSTRUMENTS.some(i=>i.live);
+  const label = anyLive ? ('Live · updated ' + lastLiveRefresh.toLocaleTimeString()) : 'Live feed unavailable — showing reference prices';
+  document.querySelectorAll('.live-status').forEach(el=> el.textContent = label);
+}
+
+const COMPANIES = [
+  {tag:'BTC', color:'var(--gold)', name:'Bitcoin (BTCUSD)', desc:'The original decentralized digital asset, traded around the clock across global exchanges and used as the benchmark for the broader crypto market.', cap:'~$1.26T mkt cap', vol:'High volatility'},
+  {tag:'XAU', color:'#a5730a', name:'Gold Spot (XAUUSD)', desc:'Physical gold priced in US dollars per troy ounce — the classic safe-haven asset that tends to move opposite to real interest rates and dollar strength.', cap:'Safe haven', vol:'Medium volatility'},
+  {tag:'EUR', color:'var(--long)', name:'Euro / US Dollar', desc:'The most traded currency pair in the world, reflecting the policy gap between the European Central Bank and the US Federal Reserve.', cap:'Eurozone', vol:'Low-medium volatility'},
+  {tag:'AUD', color:'#c15a0c', name:'Australian Dollar / USD', desc:'A commodity-linked currency closely tied to iron ore and coal exports, and a common proxy for Chinese demand.', cap:'Commodity FX', vol:'Medium volatility'},
+  {tag:'NZD', color:'#0d7d9e', name:'New Zealand Dollar / USD', desc:'Sensitive to dairy exports and the RBNZ rate path; often trades in tandem with the Australian dollar.', cap:'Commodity FX', vol:'Medium volatility'},
+  {tag:'GBP', color:'var(--short)', name:'British Pound / USD', desc:'Sterling against the dollar, driven by Bank of England policy and UK growth and inflation data.', cap:'Major FX', vol:'Medium-high volatility'},
+  {tag:'CAD', color:'#7c3aed', name:'US Dollar / Canadian Dollar', desc:"Tracks the US-Canada rate differential and oil prices, given Canada's position as a major crude exporter.", cap:'Commodity FX', vol:'Medium volatility'},
+  {tag:'CHF', color:'#15803d', name:'US Dollar / Swiss Franc', desc:'The franc is a traditional safe-haven currency; this pair often reacts to risk sentiment and SNB policy.', cap:'Safe haven FX', vol:'Low-medium volatility'}
+];
+
+let currentUser = null;
+let chartSymbolIndex = 0;
+
+/* ============ AUTH (in-memory demo, no backend) ============ */
+function openAuth(tab){ document.getElementById('authVeil').classList.remove('hidden'); switchAuthTab(tab); }
+function closeAuth(){ document.getElementById('authVeil').classList.add('hidden'); }
+function switchAuthTab(tab){
+  document.getElementById('tab-login').classList.toggle('active', tab==='login');
+  document.getElementById('tab-signup').classList.toggle('active', tab==='signup');
+  document.getElementById('pane-login').classList.toggle('hidden', tab!=='login');
+  document.getElementById('pane-signup').classList.toggle('hidden', tab!=='signup');
+}
+function doLogin(){
+  const email = document.getElementById('login-email').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  const err = document.getElementById('login-err');
+  if(!email || !pass){ err.style.display='block'; return; }
+  err.style.display='none';
+  enterApp({name: email.split('@')[0], email});
+}
+function doSignup(){
+  const name = document.getElementById('su-name').value.trim();
+  const email = document.getElementById('su-email').value.trim();
+  const pass = document.getElementById('su-pass').value;
+  const err = document.getElementById('su-err');
+  if(!name || !email || pass.length < 8){ err.style.display='block'; return; }
+  err.style.display='none';
+  enterApp({name, email});
+}
+function enterApp(user){
+  currentUser = user;
+  closeAuth();
+  document.getElementById('landing').style.display='none';
+  document.getElementById('app').classList.add('show');
+  document.getElementById('acct-name').textContent = user.name;
+  document.getElementById('acct-email').textContent = user.email;
+  document.getElementById('acct-avatar').textContent = user.name.charAt(0).toUpperCase();
+  document.getElementById('set-name').value = user.name;
+  document.getElementById('set-email').value = user.email;
+  buildMainChart();
+}
+function doLogout(){
+  document.getElementById('app').classList.remove('show');
+  document.getElementById('landing').style.display='flex';
+}
+function saveSettings(){ alert('Settings saved.'); }
+
+/* ============ NAV ============ */
+function showView(name){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  document.querySelectorAll('.side-link').forEach(l=>l.classList.toggle('active', l.dataset.view===name));
+  if(name==='charts'){ setTimeout(buildMainChart, 30); }
+  if(name==='markets'){ setTimeout(()=>embedMarketOverview('full-watchlist'), 30); }
+  if(name==='signals'){ setTimeout(embedSignalsTAWidgets, 30); }
+}
+function scrollToId(id){ document.getElementById(id).scrollIntoView({behavior:'smooth'}); }
+
+/* ============ RENDER MARKET DATA ============ */
+function fmtPrice(v){ return v >= 100 ? v.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}) : v.toFixed(4); }
+
+/* ============ LIVE WIDGET EMBEDS (real TradingView data feed — same as the charts) ============ */
+function embedWidget(containerId, src, config){
+  const host = document.getElementById(containerId);
+  if(!host || host.dataset.embedded) return;
+  host.dataset.embedded = '1';
+  host.innerHTML = '<div class="tradingview-widget-container" style="height:100%;width:100%"><div class="tradingview-widget-container__widget"></div></div>';
+  const script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src = src;
+  script.async = true;
+  script.text = JSON.stringify(config);
+  host.querySelector('.tradingview-widget-container').appendChild(script);
+}
+const WATCHLIST_SYMBOLS = [
+  {s:'BINANCE:BTCUSDT', d:'Bitcoin'},
+  {s:'OANDA:XAUUSD', d:'Gold Spot'},
+  {s:'OANDA:EURUSD', d:'Euro / US Dollar'},
+  {s:'OANDA:AUDUSD', d:'Aussie / US Dollar'},
+  {s:'OANDA:NZDUSD', d:'Kiwi / US Dollar'},
+  {s:'OANDA:GBPUSD', d:'Pound / US Dollar'},
+  {s:'OANDA:USDCAD', d:'US Dollar / Loonie'},
+  {s:'OANDA:USDCHF', d:'US Dollar / Franc'}
+];
+function embedTickerTape(){
+  embedWidget('tv-ticker-tape', 'https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js', {
+    symbols: WATCHLIST_SYMBOLS.map(x=>({proName:x.s, title:x.s.split(':')[1] || x.s})),
+    showSymbolLogo:true, isTransparent:true, displayMode:'adaptive', colorTheme:'light', locale:'en'
+  });
+}
+function embedMarketOverview(containerId){
+  embedWidget(containerId, 'https://s3.tradingview.com/external-embedding/embed-widget-market-overview.js', {
+    colorTheme:'light', dateRange:'1D', showChart:true, locale:'en', isTransparent:true,
+    showSymbolLogo:true, showFloatingTooltip:false, width:'100%', height:'100%',
+    plotLineColorGrowing:'rgba(10,143,104,1)', plotLineColorFalling:'rgba(214,48,76,1)',
+    gridLineColor:'rgba(215,220,230,0.4)', scaleFontColor:'rgba(77,85,102,1)',
+    belowLineFillColorGrowing:'rgba(10,143,104,0.12)', belowLineFillColorFalling:'rgba(214,48,76,0.12)',
+    belowLineFillColorGrowingBottom:'rgba(10,143,104,0)', belowLineFillColorFallingBottom:'rgba(214,48,76,0)',
+    symbolActiveColor:'rgba(10,143,104,0.12)',
+    tabs:[{ title:'Watchlist', symbols: WATCHLIST_SYMBOLS, originalTitle:'Watchlist' }]
+  });
+}
+function embedHeroQuote(){
+  embedWidget('hero-quote-widget', 'https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js', {
+    symbol:'OANDA:XAUUSD', width:'100%', colorTheme:'light', isTransparent:true, locale:'en'
+  });
+}
+
+function jumpToChart(sym){
+  const idx = INSTRUMENTS.findIndex(i=>i.sym===sym);
+  chartSymbolIndex = idx >= 0 ? idx : 0;
+  showView('charts');
+  setTimeout(buildMainChart, 30);
+}
+
+function renderLandingGrid(){
+  const el = document.getElementById('landing-market-grid');
+  el.innerHTML = INSTRUMENTS.map(ins=>`
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span class="sym mono" style="font-weight:700;">${ins.sym}</span>
+        <span class="mono" style="font-size:11px;color:var(--muted-2);">${ins.cls}</span>
+      </div>
+      <div style="margin-top:10px;font-family:var(--font-mono);font-size:19px;">${fmtPrice(ins.price)}</div>
+      <div style="color:var(--muted);font-size:12px;margin-top:2px;">${ins.name}</div>
+    </div>`).join('');
+}
+
+/* ============ SIGNALS ============
+   Two independent, real reads combined — not a random generator:
+   1) A momentum/volatility calculation from the price history we've actually
+      tracked for that symbol (mean reversion vs recent average, real-sample
+      standard deviation used to size stop/target distance).
+   2) TradingView's own Technical Analysis consensus (real oscillators +
+      moving averages across timeframes) embedded live in each card, so you
+      can see whether the momentum read agrees with the broader indicator set. */
+function computeSignal(ins){
+  const hist = ins.hist || [];
+  let momentum = null, vol = null;
+  if(hist.length >= 3){
+    const mean = hist.reduce((a,b)=>a+b,0)/hist.length;
+    const variance = hist.reduce((a,b)=>a+(b-mean)*(b-mean),0)/hist.length;
+    vol = Math.sqrt(variance);
+    momentum = ((ins.price-mean)/mean)*100;
+  }
+  const chgBias = (typeof ins.chg === 'number') ? ins.chg : 0;
+  const bias = momentum !== null ? (momentum*0.65 + chgBias*0.35) : chgBias;
+  const buy = bias >= 0;
+  const strength = Math.min(Math.abs(bias), 2.2);
+  const confidence = Math.round(52 + (strength/2.2)*36);
+  const defaultPct = ins.cls==='Crypto' ? 0.012 : ins.cls==='Metal' ? 0.006 : 0.0025;
+  const spread = vol ? Math.max(vol*1.4, ins.price*defaultPct*0.5) : ins.price*defaultPct;
+  const entry = ins.price;
+  const stop = buy ? entry - spread*1.5 : entry + spread*1.5;
+  const target = buy ? entry + spread*2.6 : entry - spread*2.6;
+  let quality;
+  if(hist.length >= 6) quality = 'Based on tracked live price history + 24h change';
+  else if(hist.length >= 1) quality = `Building history (${hist.length}/6 samples) — refines automatically`;
+  else quality = 'Using 24h change only — refresh shortly for a sharper read';
+  return {buy, confidence, entry, stop, target, quality};
+}
+
+function signalCardHTML(ins, i){
+  const s = computeSignal(ins);
+  return `<div class="signal-card" id="sig-${ins.sym}">
+      <div class="signal-top">
+        <div><div class="signal-sym">${ins.sym}</div><div class="signal-name">${ins.name}</div></div>
+        <span class="badge ${s.buy?'buy':'sell'}">${s.buy?'BUY':'SELL'}</span>
+      </div>
+      <div class="signal-levels">
+        <div class="slevel"><small>Entry</small><b>${fmtPrice(s.entry)}</b></div>
+        <div class="slevel"><small>Stop</small><b class="down">${fmtPrice(s.stop)}</b></div>
+        <div class="slevel"><small>Target</small><b class="up">${fmtPrice(s.target)}</b></div>
+      </div>
+      <div class="conf-bar"><div class="conf-fill" style="width:${s.confidence}%"></div></div>
+      <div class="conf-label"><span>Momentum read confidence</span><span>${s.confidence}%</span></div>
+      <div class="ta-embed" id="ta-${ins.sym}"></div>
+      <div class="signal-note">${s.quality}. Cross-check against the technical consensus above — when both agree, that's a stronger read than either alone.</div>
+      <button class="btn regen-btn" onclick="refreshOneSignal('${ins.sym}')">Refresh reading</button>
+    </div>`;
+}
+
+function renderSignals(){
+  const grid = document.getElementById('signals-grid');
+  grid.innerHTML = INSTRUMENTS.map((ins,i)=> signalCardHTML(ins,i)).join('');
+  renderTopSignal();
+}
+function embedSignalsTAWidgets(){
+  INSTRUMENTS.forEach(ins=>{
+    embedWidget('ta-'+ins.sym, 'https://s3.tradingview.com/external-embedding/embed-widget-technical-analysis.js', {
+      interval:'4h', width:'100%', isTransparent:true, height:220, symbol:ins.tv,
+      showIntervalTabs:true, locale:'en', colorTheme:'light'
+    });
+  });
+}
+function refreshOneSignal(sym){
+  refreshLiveData();
+}
+function refreshSignalNumbers(){
+  INSTRUMENTS.forEach(ins=>{
+    const card = document.getElementById('sig-'+ins.sym);
+    if(!card) return;
+    const s = computeSignal(ins);
+    card.querySelector('.badge').className = 'badge ' + (s.buy?'buy':'sell');
+    card.querySelector('.badge').textContent = s.buy ? 'BUY' : 'SELL';
+    const levels = card.querySelectorAll('.slevel b');
+    levels[0].textContent = fmtPrice(s.entry);
+    levels[1].textContent = fmtPrice(s.stop);
+    levels[2].textContent = fmtPrice(s.target);
+    card.querySelector('.conf-fill').style.width = s.confidence+'%';
+    card.querySelector('.conf-label span:last-child').textContent = s.confidence+'%';
+    const note = card.querySelector('.signal-note');
+    if(note) note.textContent = s.quality + '. Cross-check against the technical consensus above — when both agree, that\'s a stronger read than either alone.';
+  });
+  renderTopSignal();
+}
+function rankedSignals(){
+  return INSTRUMENTS.map(ins=>({ ins, s: computeSignal(ins) }))
+    .sort((a,b)=> b.s.confidence - a.s.confidence);
+}
+function reasonFor(ins, s){
+  const dir = s.buy ? 'upside' : 'downside';
+  if(ins.hist.length >= 6) return `Live price is trending ${dir} vs its recent tracked average, with confirming 24h change.`;
+  if(ins.hist.length >= 1) return `Early ${dir} bias forming — still gathering price history for a sharper read.`;
+  return `${dir[0].toUpperCase()+dir.slice(1)} bias from 24h change only.`;
+}
+function renderOpportunityRanking(containerId, limit){
+  const el = document.getElementById(containerId);
+  if(!el) return;
+  const ranked = rankedSignals().slice(0, limit || 8);
+  el.innerHTML = ranked.map(({ins,s}, i)=>`
+    <div class="rank-row">
+      <div class="rank-num">${i+1}</div>
+      <div><span class="rank-sym">${ins.sym}</span><span class="rank-name">${ins.name}</span></div>
+      <span class="badge ${s.buy?'buy':'sell'}" style="justify-self:start;">${s.buy?'BUY':'SELL'}</span>
+      <div class="rank-reason">${reasonFor(ins,s)}</div>
+      <div class="rank-conf ${s.buy?'up':'down'}">${s.confidence}% conf.</div>
+    </div>`).join('');
+}
+function renderTopSignal(){
+  const ranked = rankedSignals();
+  const top = ranked[0];
+  const ins = top.ins, s = top.s;
+  const titleEl = document.getElementById('top-setup-title');
+  if(titleEl) titleEl.textContent = `Best opportunity right now · ${ins.sym}`;
+  document.getElementById('dash-top-signal').innerHTML = `
+    <div class="signal-top">
+      <div><div class="signal-sym">${ins.sym}</div><div class="signal-name">${ins.name}</div></div>
+      <span class="badge ${s.buy?'buy':'sell'}">${s.buy?'BUY':'SELL'}</span>
+    </div>
+    <div class="signal-levels">
+      <div class="slevel"><small>Entry</small><b>${fmtPrice(s.entry)}</b></div>
+      <div class="slevel"><small>Stop</small><b class="down">${fmtPrice(s.stop)}</b></div>
+      <div class="slevel"><small>Target</small><b class="up">${fmtPrice(s.target)}</b></div>
+    </div>
+    <div class="conf-bar"><div class="conf-fill" style="width:${s.confidence}%"></div></div>
+    <div class="conf-label"><span>Momentum read confidence</span><span>${s.confidence}%</span></div>
+    <div class="signal-note" style="border-top:none;padding-top:10px;">${reasonFor(ins,s)}</div>
+  `;
+  renderOpportunityRanking('opportunity-ranking', 8);
+  renderOpportunityRanking('opportunity-ranking-full', 8);
+}
+
+/* ============ TRADE HISTORY (demo data) ============ */
+let trades = [
+  {sym:'EURUSD', side:'BUY', entry:1.0812, exit:1.0861, status:'closed-win', date:'Jul 21'},
+  {sym:'BTCUSD', side:'SELL', entry:65900, exit:64250, status:'closed-win', date:'Jul 22'},
+  {sym:'GBPUSD', side:'BUY', entry:1.2790, exit:1.2733, status:'closed-loss', date:'Jul 23'},
+  {sym:'XAUUSD', side:'BUY', entry:2350.10, exit:2378.40, status:'closed-win', date:'Jul 24'},
+  {sym:'USDCHF', side:'SELL', entry:0.8955, exit:null, status:'open', date:'Jul 26'},
+  {sym:'AUDUSD', side:'BUY', entry:0.6598, exit:0.6560, status:'closed-loss', date:'Jul 25'},
+];
+function renderHistory(){
+  document.getElementById('history-body').innerHTML = trades.map(t=>{
+    const pl = t.exit ? (((t.side==='BUY'? t.exit-t.entry : t.entry-t.exit)) * (t.sym==='BTCUSD'?1:10000)).toFixed(t.sym==='BTCUSD'?0:0) : '—';
+    const plCls = t.status==='closed-win' ? 'up' : t.status==='closed-loss' ? 'down' : '';
+    const tagLabel = t.status==='closed-win' ? 'Win' : t.status==='closed-loss' ? 'Loss' : 'Open';
+    return `<tr>
+      <td style="font-weight:700;">${t.sym}</td>
+      <td class="${t.side==='BUY'?'up':'down'}">${t.side}</td>
+      <td>${fmtPrice(t.entry)}</td>
+      <td>${t.exit? fmtPrice(t.exit) : '—'}</td>
+      <td class="${plCls}">${t.exit? (pl>=0?'+':'')+pl+' pips' : '—'}</td>
+      <td>${t.date}</td>
+      <td><span class="tag ${t.status}">${tagLabel}</span></td>
+    </tr>`;
+  }).join('');
+}
+function addDemoTrade(){
+  const ins = INSTRUMENTS[Math.floor(Math.random()*INSTRUMENTS.length)];
+  trades.unshift({sym:ins.sym, side: Math.random()>0.5?'BUY':'SELL', entry: ins.price, exit:null, status:'open', date:'Today'});
+  renderHistory();
+}
+
+/* ============ COMPANIES ============ */
+function renderCompanies(){
+  document.getElementById('companies-grid').innerHTML = COMPANIES.map(c=>`
+    <div class="company-card">
+      <div class="icon-tag" style="background:${c.color}22; color:${c.color};">${c.tag}</div>
+      <h3>${c.name}</h3>
+      <p>${c.desc}</p>
+      <div class="company-meta">
+        <div><span>Class</span><b>${c.cap}</b></div>
+        <div><span>Profile</span><b>${c.vol}</b></div>
+      </div>
+    </div>`).join('');
+}
+
+/* ============ CHARTS (TradingView widget embeds) ============ */
+function buildHeroChart(){
+  new TradingView.widget({
+    autosize:true, symbol:"OANDA:XAUUSD", interval:"60", timezone:"Etc/UTC",
+    theme:"light", style:"1", locale:"en", toolbar_bg:"#ffffff",
+    hide_top_toolbar:true, hide_legend:true, save_image:false,
+    backgroundColor:"#ffffff", gridColor:"#d7dce655",
+    container_id:"hero-chart"
+  });
+}
+function buildChartSymbolSelector(){
+  const el = document.getElementById('chart-symbol-select');
+  el.innerHTML = INSTRUMENTS.map((ins,i)=>`<button class="sym-btn ${i===chartSymbolIndex?'active':''}" onclick="selectChartSymbol(${i})">${ins.sym}</button>`).join('');
+}
+function selectChartSymbol(i){
+  chartSymbolIndex = i;
+  buildChartSymbolSelector();
+  buildMainChart();
+}
+function buildMainChart(){
+  document.getElementById('main-chart').innerHTML = '';
+  buildChartSymbolSelector();
+  const ins = INSTRUMENTS[chartSymbolIndex];
+  new TradingView.widget({
+    autosize:true, symbol:ins.tv, interval:"60", timezone:"Etc/UTC",
+    theme:"light", style:"1", locale:"en", toolbar_bg:"#ffffff",
+    enable_publishing:false, allow_symbol_change:false, save_image:false,
+    backgroundColor:"#ffffff", gridColor:"#d7dce655",
+    container_id:"main-chart"
+  });
+}
+
+/* ============ AI DESK ASSISTANT ============
+   Default mode: answers from live desk data + a built-in trading knowledge
+   base — works fully offline, no key needed. Optional mode: if the trader
+   pastes their own Anthropic API key, questions route to a live Claude
+   model instead (key kept in memory only, sent directly to Anthropic). */
+let chatOpen = false;
+let userApiKey = null;
+let chatLog = [];
+
+function toggleChat(){
+  chatOpen = !chatOpen;
+  document.getElementById('chatPanel').classList.toggle('open', chatOpen);
+  if(chatOpen && chatLog.length===0){
+    pushMessage('bot', "Hi, I'm your desk assistant. Ask me about live prices, what to trade right now, how a signal was built, or general trading concepts like stop-loss and risk:reward.");
+  }
+}
+function toggleChatSettings(){
+  document.getElementById('chatSettings').classList.toggle('hidden');
+}
+function saveApiKey(){
+  const val = document.getElementById('apiKeyInput').value.trim();
+  if(!val){ return; }
+  userApiKey = val;
+  document.getElementById('chatModeLabel').textContent = 'Connected to live Claude model';
+  document.getElementById('chatSettings').classList.add('hidden');
+  pushMessage('bot', "Live model connected for this session. I'll still fall back to built-in answers if the API call fails.");
+}
+function clearApiKey(){
+  userApiKey = null;
+  document.getElementById('apiKeyInput').value = '';
+  document.getElementById('chatModeLabel').textContent = 'Built-in trading assistant';
+}
+function pushMessage(role, text){
+  chatLog.push({role, text});
+  const box = document.getElementById('chatMessages');
+  const div = document.createElement('div');
+  div.className = 'chat-msg ' + (role==='user'?'user':'bot');
+  div.textContent = text;
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+  return div;
+}
+function sendQuickChat(text){
+  document.getElementById('chatInput').value = text;
+  sendChat();
+}
+async function sendChat(){
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if(!text) return;
+  input.value = '';
+  pushMessage('user', text);
+  const typing = pushMessage('bot', 'Thinking…');
+  typing.classList.add('typing');
+
+  let reply;
+  if(userApiKey){
+    reply = await askLiveModel(text);
+  }
+  if(!reply){
+    reply = generateAssistantReply(text);
+  }
+  typing.remove();
+  pushMessage('bot', reply);
+}
+
+/* ---- Optional: real Claude model call using the trader's own API key ---- */
+async function askLiveModel(text){
+  try{
+    const context = buildLiveContext();
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key': userApiKey,
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-access':'true'
+      },
+      body: JSON.stringify({
+        model:'claude-sonnet-5',
+        max_tokens:600,
+        system:`You are the trading desk assistant inside TANOVA.ai. Answer trading questions helpfully and concisely. Use this live data snapshot when relevant:\n${context}\nAlways remind the user this is educational, not personalized financial advice, when giving specific trade levels.`,
+        messages:[{role:'user', content:text}]
+      })
+    });
+    if(!r.ok) throw new Error('API error ' + r.status);
+    const data = await r.json();
+    const block = (data.content || []).find(c=>c.type==='text');
+    return block ? block.text : null;
+  }catch(e){
+    return null; // falls back to built-in assistant
+  }
+}
+function buildLiveContext(){
+  return rankedSignals().map(({ins,s})=>
+    `${ins.sym} (${ins.name}): price ${fmtPrice(ins.price)}, signal ${s.buy?'BUY':'SELL'}, confidence ${s.confidence}%, entry ${fmtPrice(s.entry)}, stop ${fmtPrice(s.stop)}, target ${fmtPrice(s.target)}`
+  ).join('\n');
+}
+
+/* ---- Built-in assistant: symbol lookups + FAQ knowledge base ---- */
+const SYMBOL_ALIASES = {
+  BTCUSD: ['btc','bitcoin','btcusd'],
+  XAUUSD: ['xau','gold','xauusd'],
+  EURUSD: ['eur ','euro','eurusd','eur/usd'],
+  AUDUSD: ['aud','aussie','audusd','australian dollar'],
+  NZDUSD: ['nzd','kiwi','nzdusd','new zealand dollar'],
+  GBPUSD: ['gbp','pound','sterling','gbpusd','cable'],
+  USDCAD: ['loonie','usdcad','canadian dollar',' cad'],
+  USDCHF: ['chf','swiss franc','usdchf']
+};
+function detectSymbol(t){
+  for(const [sym, aliases] of Object.entries(SYMBOL_ALIASES)){
+    for(const a of aliases){ if(t.includes(a)) return sym; }
+  }
+  return null;
+}
+const KNOWLEDGE_BASE = [
+  { test:t=>/\b(stop.?loss|stop loss)\b/.test(t),
+    answer:"A stop-loss is a price you set in advance where you'll exit a losing trade automatically, so a bad move can't wipe out more of your account than you planned. On this desk, every AI setup card shows a suggested stop level based on recent volatility — it's meant as a starting point, not a rule." },
+  { test:t=>/\b(take.?profit|target|tp)\b/.test(t),
+    answer:"A take-profit (or target) is the price where you plan to close a winning trade and lock in gains, instead of hoping it keeps running. Setting it before you enter — alongside your stop-loss — is what makes a risk:reward ratio possible to calculate up front." },
+  { test:t=>/risk.?(to|:)?.?reward|r:?r\b/.test(t),
+    answer:"Risk:reward compares how much you're risking (entry to stop) against how much you stand to gain (entry to target). A 1:2 ratio means you're risking $1 to potentially make $2. Even a strategy that wins less than half the time can be profitable if the winners are big enough relative to the losers." },
+  { test:t=>/position siz|lot size|how much should i (risk|trade)/.test(t),
+    answer:"A common rule of thumb is to risk only 1–2% of your account on any single trade. Position size = (account size × risk %) ÷ (entry price − stop price). That way one bad trade never puts your whole account in danger." },
+  { test:t=>/\bleverage|margin call\b/.test(t),
+    answer:"Leverage lets you control a larger position than your account balance alone would allow, which multiplies both gains and losses. A margin call happens when losses eat into your required margin and the broker asks you to add funds or closes your position. Higher leverage means smaller price moves can wipe you out — size positions conservatively." },
+  { test:t=>/\bpip\b/.test(t),
+    answer:"A pip is typically the smallest standard price move in a forex pair — usually the 4th decimal place (2nd for JPY pairs). It's the standard unit traders use to measure gains, losses, and stop/target distance in FX." },
+  { test:t=>/how (do|does).*(signal|ai|model|setup).*work|how (is|are).*(signal|setup).*(generated|built|made)/.test(t),
+    answer:"Each AI setup combines two real reads: (1) a momentum calculation from the live price history this desk has tracked for that symbol, comparing the current price to its recent average and volatility, and (2) TradingView's own technical-analysis consensus — real oscillators and moving averages — embedded live in the card. When both agree, that's a stronger signal than either alone. Neither is a guarantee." },
+  { test:t=>/log a trade|trade history|track (my|a) trade/.test(t),
+    answer:"Head to Trade History in the sidebar and click \"+ Log a trade\" to record one. Each entry tracks symbol, side, entry, exit and P/L so you can review your own track record over time." },
+  { test:t=>/candlestick|read a chart|how to read.*chart/.test(t),
+    answer:"Each candlestick shows the open, high, low and close for a time period. A filled/red body means price closed lower than it opened; a green/hollow body means it closed higher. The thin lines (wicks) show the high and low reached during that period. Zoom into Live Charts to see this in real time for any symbol on the desk." },
+  { test:t=>/risk management|manage risk|protect (my|your) account/.test(t),
+    answer:"Core habits that matter more than any single signal: risk a small, fixed % per trade (commonly 1-2%), always set a stop-loss before entering, avoid oversized positions from leverage, and don't chase a loss by doubling up. Consistency in risk control tends to matter more than being right on any one trade." },
+  { test:t=>/what (is|does) (tanova|this (site|platform|desk|app))/.test(t),
+    answer:"TANOVA.ai is a single desk for watching Bitcoin, gold, and the major FX pairs — live charts, model-generated trade setups, and a trade journal, all in one screen. Check the About section on the landing page for more." },
+  { test:t=>/\b(hi|hello|hey)\b/.test(t) && t.length < 20,
+    answer:"Hey! Ask me about a specific market (\"what's the signal on gold\"), what to trade right now, or any trading concept you want explained." },
+  { test:t=>/thank/.test(t),
+    answer:"Anytime — good luck out there, and remember to size positions sensibly." },
+  { test:t=>/who (built|made|runs) this|contact|founder/.test(t),
+    answer:"TANOVA.ai was built by Tanishk. You can reach out at tanishk188@gmail.com — see the About section for more." }
+];
+function generateAssistantReply(text){
+  const t = text.toLowerCase();
+
+  if(/\b(best|top|which market|what should i trade|opportunit|what.*trade.*(now|today))\b/.test(t)){
+    const top = rankedSignals().slice(0,3);
+    const lines = top.map((r,i)=> `${i+1}. ${r.ins.sym} — ${r.s.buy?'BUY':'SELL'} bias, ${r.s.confidence}% confidence (entry ${fmtPrice(r.s.entry)}, stop ${fmtPrice(r.s.stop)}, target ${fmtPrice(r.s.target)})`).join('\n');
+    return `Based on tracked momentum and live data, here's how the desk currently ranks the strongest setups:\n\n${lines}\n\nCross-check the technical-analysis panel on the AI Setups page before acting — this isn't personalized financial advice.`;
+  }
+
+  const sym = detectSymbol(t);
+  if(sym){
+    const ins = findIns(sym);
+    const s = computeSignal(ins);
+    return `${ins.sym} (${ins.name}) is trading around ${fmtPrice(ins.price)}. Current read: ${s.buy?'BUY':'SELL'} at ${s.confidence}% confidence — suggested entry ${fmtPrice(s.entry)}, stop ${fmtPrice(s.stop)}, target ${fmtPrice(s.target)}. ${reasonFor(ins,s)} Open AI Setups for the live technical panel too.`;
+  }
+
+  for(const intent of KNOWLEDGE_BASE){
+    if(intent.test(t)) return intent.answer;
+  }
+
+  return "I can help with live prices and signals for BTC, gold, and the majors in FX, explain concepts like stop-loss, position sizing or risk:reward, or point you around the desk. Try \"what's the signal on gold\" or \"what is a stop loss\".";
+}
+
+/* ============ INIT ============ */
+window.addEventListener('load', async ()=>{
+  // Paint immediately with reference prices so the UI never looks empty...
+  renderLandingGrid();
+  renderHistory();
+  renderCompanies();
+  buildHeroChart();
+
+  // Real, live-ticking TradingView widgets — same feed that drives the charts.
+  embedTickerTape();
+  embedHeroQuote();
+  embedMarketOverview('dash-watchlist');
+
+  // Reference prices (BTC + gold real-time, FX daily) that feed the signal math.
+  await refreshLiveData();
+  renderSignals();
+
+  // Every 45s: pull fresh prices, extend the tracked history, and update signal
+  // numbers in place (the embedded technical-analysis panels refresh themselves).
+  setInterval(refreshLiveData, 45000);
+});
+</script>
+</body>
+</html>
